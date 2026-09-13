@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Victor's Block World - Infinito</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="ui-layer">
+        <!-- HUD Principal -->
+        <div id="hud">
+            <div id="stats">
+                <div id="mode-display">Modo: Sobrevivência</div>
+                <div class="stat-row">
+                    <span>❤️ Saúde:</span>
+                    <div id="health-bar"><div id="health-fill"></div></div>
+                </div>
+                <div class="stat-row">
+                    <span>🍗 Fome:</span>
+                    <div id="hunger-bar"><div id="hunger-fill"></div></div>
+                </div>
+                <div id="coords">X: 0 Y: 0 Z: 0</div>
+                <div id="time-display">Dia 1 - 06:00</div>
+                <div id="biome-display">Bioma: Floresta</div>
+            </div>
+
+            <div id="crosshair"></div>
+            <div id="mining-progress"><div id="mining-fill"></div></div>
+            <div id="item-tooltip">Item Name</div>
+
+            <!-- Hotbar -->
+            <div id="hotbar"></div>
+
+            <!-- Controles Mobile -->
+            <div id="mobile-controls">
+                <div id="joystick-zone"><div id="joystick-knob"></div></div>
+                <div id="jump-btn" class="action-circle">PULAR</div>
+                <div id="action-btn" class="action-circle">QUEBRAR</div>
+                <div id="toggle-action-btn" class="action-circle">M</div>
+                <div id="inv-btn" class="action-circle">🎒</div>
+            </div>
+        </div>
+
+        <!-- Menu Principal -->
+        <div id="main-menu">
+            <div class="menu-container">
+                <div class="menu-title">
+                    <h1>VICTOR'S BLOCK WORLD</h1>
+                    <p class="subtitle">Infinito & Procedural</p>
+                </div>
+                
+                <div class="menu-buttons">
+                    <button class="menu-btn primary" id="btn-new-world">🌍 Novo Mundo</button>
+                    <button class="menu-btn" id="btn-continue">▶️ Continuar</button>
+                    <button class="menu-btn" id="btn-settings">⚙️ Configurações</button>
+                </div>
+
+                <div class="menu-stats">
+                    <div class="stat-card">
+                        <span class="icon">🎮</span>
+                        <div>
+                            <div class="label">Modo</div>
+                            <div class="value" id="menu-mode">Sobrevivência</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="icon">📦</span>
+                        <div>
+                            <div class="label">Blocos</div>
+                            <div class="value">35+</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="icon">👹</span>
+                        <div>
+                            <div class="label">Criaturas</div>
+                            <div class="value">12+</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-footer">
+                    <p>W/A/S/D - Mover | ESPAÇO - Pular | E - Inventário | Clique - Quebrar/Colocar</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu de Pausa -->
+        <div id="pause-menu" style="display: none;">
+            <div class="menu-container">
+                <h2>JOGO PAUSADO</h2>
+                <div class="menu-buttons">
+                    <button class="menu-btn primary" id="btn-resume">▶️ Continuar</button>
+                    <button class="menu-btn" id="btn-settings-pause">⚙️ Configurações</button>
+                    <button class="menu-btn" id="btn-main-menu">🏠 Menu Principal</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tela de Inventário -->
+        <div id="inventory-screen">
+            <div class="inv-container">
+                <div class="inv-header">
+                    <h3>Inventário & Crafting</h3>
+                    <button class="btn-close" onclick="toggleInventory()">✕</button>
+                </div>
+                
+                <div class="tabs-container">
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" data-tab="inventory">Inventário</button>
+                        <button class="tab-btn" data-tab="crafting">Crafting</button>
+                        <button class="tab-btn" data-tab="equipment">Equipamento</button>
+                    </div>
+
+                    <!-- Aba Inventário -->
+                    <div class="tab-content active" data-tab="inventory">
+                        <div style="font-size:0.8rem; margin-bottom:8px;">Itens</div>
+                        <div id="main-inv-grid" style="display: flex; flex-direction: column; gap:4px;"></div>
+                    </div>
+
+                    <!-- Aba Crafting -->
+                    <div class="tab-content" data-tab="crafting">
+                        <div class="crafting-area">
+                            <div>
+                                <div style="font-size:0.8rem; margin-bottom:2px;">Crafting (3x3)</div>
+                                <div class="crafting-grid" id="craft-grid"></div>
+                            </div>
+                            <div class="craft-arrow">➜</div>
+                            <div>
+                                <div style="font-size:0.8rem; margin-bottom:2px;">Resultado</div>
+                                <div class="inv-slot" id="craft-result" onclick="takeCraftResult()"></div>
+                            </div>
+                        </div>
+                        <div id="recipe-list" style="margin-top: 15px; max-height: 300px; overflow-y: auto; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 4px;"></div>
+                    </div>
+
+                    <!-- Aba Equipamento -->
+                    <div class="tab-content" data-tab="equipment">
+                        <div class="equipment-grid">
+                            <div class="equip-slot" id="equip-head">
+                                <div class="slot-label">Capacete</div>
+                                <div class="inv-slot" style="width: 60px; height: 60px;"></div>
+                            </div>
+                            <div class="equip-slot" id="equip-chest">
+                                <div class="slot-label">Peitoral</div>
+                                <div class="inv-slot" style="width: 60px; height: 60px;"></div>
+                            </div>
+                            <div class="equip-slot" id="equip-legs">
+                                <div class="slot-label">Perneiras</div>
+                                <div class="inv-slot" style="width: 60px; height: 60px;"></div>
+                            </div>
+                            <div class="equip-slot" id="equip-feet">
+                                <div class="slot-label">Botas</div>
+                                <div class="inv-slot" style="width: 60px; height: 60px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Item no Cursor -->
+        <div id="cursor-item"><img src="" class="slot-img"><div class="slot-count"></div></div>
+
+        <!-- Notificações -->
+        <div id="notification-container"></div>
+    </div>
+
+    <script src="constants.js"></script>
+    <script src="worldgen.js"></script>
+    <script src="audio.js"></script>
+    <script src="entities.js"></script>
+    <script src="ui.js"></script>
+    <script src="inventory.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
